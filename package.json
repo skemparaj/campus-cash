@@ -4,6 +4,7 @@
   "description": "Smart Digital Campus Wallet",
   "main": "server/server.js",
   "scripts": {
+    "build": "cd client && npm install && npm run build",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
     "seed": "cd server && node config/seed.js",
     "server": "cd server && node server.js",
