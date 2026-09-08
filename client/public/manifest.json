@@ -1,0 +1,17 @@
+{
+  "short_name": "Campus Cash",
+  "name": "Campus Cash - Smart Digital Campus Wallet",
+  "description": "Your Campus. Your Wallet. Your Cashless Life.",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#080B16",
+  "theme_color": "#080B16",
+  "display": "standalone",
+  "orientation": "portrait"
+}

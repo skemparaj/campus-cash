@@ -1,0 +1,24 @@
+{
+  "name": "campus-cash",
+  "version": "1.0.0",
+  "description": "Smart Digital Campus Wallet",
+  "main": "server/server.js",
+  "scripts": {
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "seed": "cd server && node config/seed.js",
+    "server": "cd server && node server.js",
+    "client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "keywords": [
+    "campus",
+    "wallet",
+    "fintech",
+    "qr-payment"
+  ],
+  "author": "Campus Cash Team",
+  "license": "ISC",
+  "dependencies": {
+    "mysql2": "^3.24.4"
+  }
+}
