@@ -127,17 +127,25 @@ export default function QRPaymentModal({ isOpen, onClose, onSuccess }) {
             </div>
 
             {/* 3D Smartphone Frame Scanner Simulation */}
-            <div style={{
-              background: '#101B3D',
-              borderRadius: '24px',
-              padding: '24px',
-              textAlign: 'center',
-              color: '#FFFFFF',
-              marginBottom: '24px',
-              boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
+            <div 
+              onClick={() => handleSelectVendor(demoVendors[0])}
+              style={{
+                background: '#101B3D',
+                borderRadius: '24px',
+                padding: '24px',
+                textAlign: 'center',
+                color: '#FFFFFF',
+                marginBottom: '24px',
+                boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
+                position: 'relative',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, border-color 0.2s ease',
+                border: '2px solid transparent'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#FF6B35'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
+            >
               <div style={{
                 width: '160px',
                 height: '160px',
@@ -160,7 +168,12 @@ export default function QRPaymentModal({ isOpen, onClose, onSuccess }) {
                   boxShadow: '0 0 10px #FF6B35'
                 }} />
               </div>
-              <span style={{ fontSize: '0.78rem', color: '#CBD5E1' }}>Point camera at vendor QR code</span>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FF6B35', marginBottom: '4px' }}>
+                📸 Tap Scanner to Auto-Detect QR
+              </div>
+              <span style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>
+                Point camera at QR code or tap frame to scan
+              </span>
             </div>
 
             {/* DEMO VENDOR SELECTION */}
