@@ -11,6 +11,7 @@ export default function QRPaymentModal({ isOpen, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [paymentResult, setPaymentResult] = useState(null);
 
+  const [qrInput, setQrInput] = useState('');
   const [idempotencyKey, setIdempotencyKey] = useState('');
 
   if (!isOpen) return null;
@@ -22,12 +23,40 @@ export default function QRPaymentModal({ isOpen, onClose, onSuccess }) {
     { qrId: 'QR_BUS_04', name: 'Campus Transport Bus', category: 'Transit Pass', defaultAmount: 50 }
   ];
 
+  const handleQrLookup = async (targetQrId) => {
+    const codeToSearch = targetQrId || qrInput || 'QR_CANTEEN_01';
+    setLoading(true);
+    try {
+      const res = await api.initiatePayment({ qrCodeId: codeToSearch });
+      if (res?.success && res?.data) {
+        setSelectedVendor({
+          qrId: res.data.qrId,
+          name: res.data.vendorName,
+          category: res.data.category,
+          defaultAmount: res.data.suggestedAmount || 100
+        });
+        setCustomAmount((res.data.suggestedAmount || 100).toString());
+        setIdempotencyKey(`PAY_IDEM_${Date.now()}_${Math.random().toString(36).substring(7)}`);
+        setStep(2);
+      } else {
+        const fallback = demoVendors.find(v => v.qrId === codeToSearch) || demoVendors[0];
+        handleSelectVendor(fallback);
+      }
+    } catch (err) {
+      const fallback = demoVendors.find(v => v.qrId === codeToSearch) || demoVendors[0];
+      handleSelectVendor(fallback);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSelectVendor = (v) => {
     setSelectedVendor(v);
     setCustomAmount(v.defaultAmount.toString());
     setIdempotencyKey(`PAY_IDEM_${Date.now()}_${Math.random().toString(36).substring(7)}`);
     setStep(2);
   };
+
 
   const handleConfirmPayment = async () => {
     if (!selectedVendor || !customAmount || Number(customAmount) <= 0 || loading) return;
@@ -176,9 +205,51 @@ export default function QRPaymentModal({ isOpen, onClose, onSuccess }) {
               </span>
             </div>
 
+            {/* QR Input Search Box */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#101B3D', display: 'block', marginBottom: '6px' }}>
+                📷 Enter or Paste Scanned QR Code ID
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="e.g. QR_CANTEEN_01"
+                  value={qrInput}
+                  onChange={(e) => setQrInput(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    border: '1px solid #CBD5E1',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    color: '#101B3D'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleQrLookup(qrInput || 'QR_CANTEEN_01')}
+                  disabled={loading}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    background: '#FF6B35',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {loading ? 'Scanning...' : 'Scan & Pay'}
+                </button>
+              </div>
+            </div>
+
+
             {/* DEMO VENDOR SELECTION */}
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#101B3D', textTransform: 'uppercase', marginBottom: '10px' }}>
               Or Select Merchant:
+
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

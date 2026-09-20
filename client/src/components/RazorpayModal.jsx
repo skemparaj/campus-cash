@@ -118,11 +118,29 @@ export default function RazorpayModal({ isOpen, onClose, amount, targetStudentUs
     }
   };
 
+  const launchUpiDeepLink = (appName) => {
+    setSelectedMethod(appName);
+    const upiDeepLink = `upi://pay?pa=campuscash.rzp@icici&pn=CampusCash&am=${numAmount}&cu=INR&tn=Campus%20Cash%20Wallet%20Recharge`;
+    try {
+      window.location.href = upiDeepLink;
+    } catch (e) {
+      console.log('UPI Intent launched:', upiDeepLink);
+    }
+  };
+
   const handleSimulatedPay = async () => {
     if (!order) return;
 
+    // Trigger direct UPI deep link if Google Pay / PhonePe is selected
+    if (activeTab === 'upi') {
+      const upiDeepLink = `upi://pay?pa=campuscash.rzp@icici&pn=CampusCash&am=${numAmount}&cu=INR&tn=Campus%20Cash%20Wallet%20Recharge`;
+      try {
+        window.location.href = upiDeepLink;
+      } catch (e) {}
+    }
+
     const mockPaymentId = `pay_rzp_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
-    let methodDesc = 'Razorpay UPI Payment';
+    let methodDesc = 'Razorpay UPI Payment (Google Pay)';
 
     if (activeTab === 'card') {
       methodDesc = `Razorpay Card (*${cardNumber.slice(-4)})`;
@@ -134,6 +152,7 @@ export default function RazorpayModal({ isOpen, onClose, amount, targetStudentUs
 
     await verifyPaymentOnServer(order.id, mockPaymentId, 'sandbox_signature_passed', methodDesc);
   };
+
 
   if (!isOpen) return null;
 
