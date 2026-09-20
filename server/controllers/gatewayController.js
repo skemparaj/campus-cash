@@ -122,7 +122,7 @@ function verifyPayment(req, res) {
     // Validate Signature
     let isSignatureValid = false;
 
-    if (KEY_SECRET && razorpay_signature && !KEY_SECRET.includes('demo')) {
+    if (KEY_SECRET && razorpay_signature && !razorpay_signature.startsWith('sandbox_')) {
       const generatedSignature = crypto
         .createHmac('sha256', KEY_SECRET)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -133,6 +133,7 @@ function verifyPayment(req, res) {
       // Interactive Sandbox mode verification
       isSignatureValid = Boolean(razorpay_payment_id && razorpay_order_id);
     }
+
 
     if (!isSignatureValid) {
       return res.status(400).json({
