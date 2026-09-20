@@ -9,6 +9,7 @@ const parentController = require('../controllers/parentController');
 const vendorController = require('../controllers/vendorController');
 const adminController = require('../controllers/adminController');
 const notificationController = require('../controllers/notificationController');
+const gatewayController = require('../controllers/gatewayController');
 
 // 1. AUTHENTICATION ROUTES
 router.post('/auth/register', authController.register);
@@ -20,8 +21,10 @@ router.post('/auth/reset-password', authController.resetPassword);
 // 2. PAYMENT ROUTES
 router.post('/payments/initiate', verifyToken, paymentController.initiatePayment);
 router.post('/payments/confirm', verifyToken, paymentController.confirmPayment);
+router.post('/payments/refund', verifyToken, paymentController.processRefund);
 router.get('/payments/history', verifyToken, paymentController.getPaymentHistory);
 router.get('/payments/:id', verifyToken, paymentController.getPaymentReceipt);
+
 
 // 3. STUDENT ROUTES
 router.get('/student/dashboard', verifyToken, requireRole('STUDENT'), studentController.getStudentDashboard);
@@ -51,4 +54,10 @@ router.get('/notifications', verifyToken, notificationController.getNotification
 router.put('/notifications/:id/read', verifyToken, notificationController.markAsRead);
 router.delete('/notifications/:id', verifyToken, notificationController.deleteNotification);
 
+// 8. RAZORPAY PAYMENT GATEWAY ROUTES
+router.post('/payment-gateway/create-order', verifyToken, gatewayController.createOrder);
+router.post('/payment-gateway/verify-payment', verifyToken, gatewayController.verifyPayment);
+router.post('/payment-gateway/webhook', gatewayController.handleWebhook);
+
 module.exports = router;
+

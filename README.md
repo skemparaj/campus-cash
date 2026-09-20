@@ -128,14 +128,18 @@ npm run dev
 
 ---
 
-## 💳 Future Payment Gateway Integration Layer
+## 💳 Razorpay Payment Gateway Integration
 
-Campus Cash uses a **Virtual Demo Wallet** engine for academic demonstration. The system is designed with a decoupled payment abstraction (`/api/payments/confirm`), allowing seamless future integration with production payment gateways like Razorpay, Cashfree, or UPI Intents:
+Campus Cash is integrated with **Razorpay Payment Gateway** supporting instant UPI, Credit/Debit Cards, NetBanking, and Webhook verification:
 
-```js
-// Future Gateway Switch Architecture:
-async function processGatewayIntent(amount) {
-  // 1. Create Razorpay / UPI order
-  // 2. On Webhook verification -> invoke confirmPayment()
-}
+- **Order Creation API**: `POST /api/payment-gateway/create-order` initializes INR gateway orders.
+- **HMAC Signature Verification**: `POST /api/payment-gateway/verify-payment` verifies payment signatures using HMAC SHA-256 before atomic wallet credit.
+- **Razorpay Checkout Modal**: Dynamic UPI QR, Google Pay/PhonePe apps, Card test numbers, NetBanking selector, and Sandbox simulation.
+- **Webhook Listener**: `POST /api/payment-gateway/webhook` receives `payment.captured` for server-to-server auto-settlement.
+
+### Environment Setup (`server/.env`)
+```env
+RAZORPAY_KEY_ID=rzp_test_your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
 ```
+

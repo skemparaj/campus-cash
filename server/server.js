@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
+const db = require('./config/database');
 const apiRoutes = require('./routes/api');
 
 const app = express();
@@ -16,6 +17,16 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Ensure DB is ready for all requests
+app.use(async (req, res, next) => {
+  try {
+    await db.ready;
+    next();
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Database engine initialization failed' });
+  }
+});
 
 // Health Check & Root API Status (Requirement 39)
 app.get('/api/health', (req, res) => {

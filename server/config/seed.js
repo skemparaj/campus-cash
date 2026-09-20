@@ -1,7 +1,8 @@
 const bcrypt = require('bcryptjs');
 const db = require('./database');
 
-function seedDatabase() {
+async function seedDatabase() {
+  await db.ready;
   console.log('🌱 Seeding Campus Cash Database with demo accounts and data...');
 
   const passwordHashStudent = bcrypt.hashSync('Student@123', 10);

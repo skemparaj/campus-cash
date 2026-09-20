@@ -222,7 +222,30 @@ export default function QRPaymentModal({ isOpen, onClose, onSuccess }) {
               <span style={{ fontSize: '0.8rem', color: '#4A5568' }}>{selectedVendor.category}</span>
             </div>
 
-            {/* Breakdown Card */}
+            {/* Custom Amount Input & Breakdown Card */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '0.84rem', fontWeight: 700, color: '#101B3D', display: 'block', marginBottom: '6px' }}>
+                Enter Custom Amount (₹)
+              </label>
+              <input
+                type="number"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                placeholder="Enter amount"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '1.5rem',
+                  fontWeight: 800,
+                  textAlign: 'center',
+                  color: '#FF6B35',
+                  background: '#F7F5F0',
+                  border: '2px solid rgba(255, 107, 53, 0.3)',
+                  borderRadius: '16px'
+                }}
+              />
+            </div>
+
             <div style={{ background: '#F7F5F0', padding: '20px', borderRadius: '20px', marginBottom: '24px', border: '1px solid rgba(16, 27, 61, 0.12)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '0.88rem' }}>
                 <span style={{ color: '#4A5568' }}>Payment Amount:</span>
@@ -237,6 +260,7 @@ export default function QRPaymentModal({ isOpen, onClose, onSuccess }) {
                 <span style={{ fontWeight: 800, color: '#101B3D' }}>₹{remaining.toFixed(2)}</span>
               </div>
             </div>
+
 
             <button
               onClick={handleConfirmPayment}

@@ -9,12 +9,16 @@
     "seed": "node config/seed.js"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.24.4"
+    "mysql2": "^3.24.4",
+    "razorpay": "^2.9.8",
+    "sql.js": "^1.14.2",
+    "sqlite3": "^6.0.1"
   }
 }

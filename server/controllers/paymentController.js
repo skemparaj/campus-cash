@@ -389,9 +389,137 @@ function getPaymentHistory(req, res) {
   });
 }
 
+// Atomic Refund Processing Engine
+function processRefund(req, res) {
+  const { transactionId, reason } = req.body;
+  const userRole = req.user.role;
+  const userId = req.user.id;
+
+  if (!transactionId) {
+    return res.status(400).json({ success: false, error: 'Transaction ID is required for refund.' });
+  }
+
+  // 1. Fetch payment and related transactions
+  const payment = db.prepare(`
+    SELECT p.*, wt.amount, wt.status as tx_status, wt.user_id as student_user_id
+    FROM payments p
+    JOIN wallet_transactions wt ON p.transaction_id = wt.transaction_id
+    WHERE p.transaction_id = ? OR p.payment_id = ?
+  `).get(transactionId, transactionId);
+
+  if (!payment) {
+    return res.status(404).json({ success: false, error: 'Original payment record not found.' });
+  }
+
+  if (payment.status === 'REFUNDED') {
+    return res.status(400).json({ success: false, error: 'This payment has already been refunded.' });
+  }
+
+  // Authorize: Only admin or the merchant vendor who received the payment can issue refund
+  if (userRole === 'VENDOR' && payment.vendor_id !== userId) {
+    return res.status(403).json({ success: false, error: 'Unauthorized to refund payments for another vendor.' });
+  }
+
+  const numAmount = Number(payment.amount);
+  const numAmountPaise = Math.round(numAmount * 100);
+
+  try {
+    const result = db.transaction(() => {
+      // Lock student wallet
+      const studentWallet = db.prepare('SELECT * FROM wallets WHERE user_id = ?').get(payment.student_id);
+      if (!studentWallet) throw new Error('Student wallet not found for refund credit.');
+
+      // Lock vendor wallet
+      const vendorWallet = db.prepare('SELECT * FROM wallets WHERE user_id = ?').get(payment.vendor_id);
+      if (!vendorWallet) throw new Error('Vendor wallet not found for refund debit.');
+
+      const vendorBalPaise = Math.round(Number(vendorWallet.balance) * 100);
+      if (vendorBalPaise < numAmountPaise) {
+        throw new Error('Vendor wallet has insufficient balance to process this refund.');
+      }
+
+      const studentCurrentBalPaise = Math.round(Number(studentWallet.balance) * 100);
+      const newStudentBalPaise = studentCurrentBalPaise + numAmountPaise;
+      const newVendorBalPaise = vendorBalPaise - numAmountPaise;
+
+      const newStudentBalRupees = newStudentBalPaise / 100;
+      const newVendorBalRupees = newVendorBalPaise / 100;
+
+      // 1. Update wallets
+      db.prepare('UPDATE wallets SET balance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        .run(newStudentBalRupees, studentWallet.id);
+
+      db.prepare('UPDATE wallets SET balance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        .run(newVendorBalRupees, vendorWallet.id);
+
+      // 2. Mark payment and original transaction as REFUNDED
+      db.prepare("UPDATE payments SET status = 'REFUNDED' WHERE payment_id = ?").run(payment.payment_id);
+      db.prepare("UPDATE wallet_transactions SET status = 'REFUNDED' WHERE transaction_id = ?").run(payment.transaction_id);
+
+      // 3. Insert Student Refund Ledger Record
+      const refundTxId = `TXN_RFND_${Date.now()}`;
+      db.prepare(`
+        INSERT INTO wallet_transactions
+        (transaction_id, wallet_id, user_id, type, amount, previous_balance, new_balance, reference_id, status, description)
+        VALUES (?, ?, ?, 'REFUND', ?, ?, ?, ?, 'SUCCESS', ?)
+      `).run(
+        refundTxId,
+        studentWallet.id,
+        payment.student_id,
+        numAmount,
+        studentCurrentBalPaise / 100,
+        newStudentBalRupees,
+        payment.transaction_id,
+        `Refund for Payment ${payment.payment_id}: ${reason || 'Customer Refund'}`
+      );
+
+      // 4. Notifications
+      const studentUser = db.prepare('SELECT name FROM users WHERE id = ?').get(payment.student_id);
+      const studentProfile = db.prepare('SELECT parent_id FROM students WHERE user_id = ?').get(payment.student_id);
+
+      db.prepare(`
+        INSERT INTO notifications (user_id, title, message, category)
+        VALUES (?, 'Refund Processed', ?, 'Refund')
+      `).run(payment.student_id, `₹${numAmount.toFixed(2)} refund credited to your wallet for payment ${payment.payment_id}.`);
+
+      if (studentProfile && studentProfile.parent_id) {
+        db.prepare(`
+          INSERT INTO notifications (user_id, title, message, category)
+          VALUES (?, 'Student Refund Alert', ?, 'Refund')
+        `).run(studentProfile.parent_id, `₹${numAmount.toFixed(2)} refund processed for ${studentUser.name}.`);
+      }
+
+      // 5. Audit Log
+      db.prepare(`
+        INSERT INTO audit_logs (user_id, user_email, role, action, module, status, details)
+        VALUES (?, ?, ?, 'Refund Processed', 'PAYMENT', 'SUCCESS', ?)
+      `).run(userId, req.user.email, userRole, `Refunded ₹${numAmount} for payment #${payment.payment_id}`);
+
+      return {
+        refundTxId,
+        paymentId: payment.payment_id,
+        amount: numAmount,
+        newStudentBalance: newStudentBalRupees,
+        newVendorBalance: newVendorBalRupees
+      };
+    })();
+
+    return res.json({
+      success: true,
+      message: 'Payment Refunded Successfully',
+      data: result
+    });
+  } catch (err) {
+    console.error('Refund Error:', err.message);
+    return res.status(400).json({ success: false, error: err.message || 'Refund processing failed.' });
+  }
+}
+
 module.exports = {
   initiatePayment,
   confirmPayment,
   getPaymentReceipt,
-  getPaymentHistory
+  getPaymentHistory,
+  processRefund
 };
+

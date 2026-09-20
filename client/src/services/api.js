@@ -78,5 +78,10 @@ export const api = {
   // Notifications
   getNotifications: () => request('/notifications'),
   markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
-  deleteNotification: (id) => request(`/notifications/${id}`, { method: 'DELETE' })
+  deleteNotification: (id) => request(`/notifications/${id}`, { method: 'DELETE' }),
+
+  // Razorpay Payment Gateway
+  createRazorpayOrder: (data) => request('/payment-gateway/create-order', { method: 'POST', body: JSON.stringify(data) }),
+  verifyRazorpayPayment: (data) => request('/payment-gateway/verify-payment', { method: 'POST', body: JSON.stringify(data) })
 };
+
