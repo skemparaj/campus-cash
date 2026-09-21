@@ -218,10 +218,48 @@ function resetPassword(req, res) {
   });
 }
 
+function changePassword(req, res) {
+  const userId = req.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, error: 'Current password and new password are required.' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, error: 'New password must be at least 6 characters long.' });
+  }
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  if (!user) {
+    return res.status(404).json({ success: false, error: 'User account not found.' });
+  }
+
+  const isCurrentValid = bcrypt.compareSync(currentPassword, user.password);
+  if (!isCurrentValid) {
+    return res.status(401).json({ success: false, error: 'Current password is incorrect.' });
+  }
+
+  const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
+  db.prepare('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(hashedNewPassword, userId);
+
+  db.prepare(`
+    INSERT INTO audit_logs (user_id, user_email, role, action, module, status, details)
+    VALUES (?, ?, ?, 'Change Password', 'AUTH', 'SUCCESS', 'User changed account password')
+  `).run(userId, user.email, user.role);
+
+  return res.json({
+    success: true,
+    message: 'Your password has been changed successfully.'
+  });
+}
+
 module.exports = {
   register,
   login,
   me,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  changePassword
 };
+

@@ -17,6 +17,8 @@ router.post('/auth/login', authController.login);
 router.get('/auth/me', verifyToken, authController.me);
 router.post('/auth/forgot-password', authController.forgotPassword);
 router.post('/auth/reset-password', authController.resetPassword);
+router.post('/auth/change-password', verifyToken, authController.changePassword);
+
 
 // 2. PAYMENT ROUTES
 router.post('/payments/initiate', verifyToken, paymentController.initiatePayment);
